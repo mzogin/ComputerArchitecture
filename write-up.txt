@@ -1,0 +1,20 @@
+Name: Michael Zogin
+Email: michael_zogin@student.uml.edu
+
+	I think that my degree of success with this project is 99%. The way that I approached
+this problem is by firsting starting with the a6main.asm file given by Prof. Moloney and 
+using it as my outline. I then went back to my assignment 5 program and split it up into the
+necessary functions and modified them as needed based on the new main driver. For the linker,
+I started by making a simple program to open a file and copy all of its contents. From there,
+I was slowly able to have it take in an arbitrary number of arguments, as well as added 
+support for the -o option. The only problem that I was not able to resolve is that my program
+does not return -1 in the ac in the case of an overflow. I set the ac to 0 in my addints
+function itself, which correctly returns a 0 in the ac upon successful addition. However,
+when I tried different ways of setting the ac to -1 in my main function, it would result in
+the first prompt being printed endlessly.
+
+My makefile includes all the steps needed to build the seperate assembly files into the a6.o
+consolidated object file and the a6.exe executable file. In order to run the executable,
+you can use the following line:
+
+./mic1 new_prom.dat a6.exe 0 1024 

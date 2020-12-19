@@ -1,1 +1,1 @@
-
+This linker program can take in an arbitrary number of assembly files and link them together into one executable object file.

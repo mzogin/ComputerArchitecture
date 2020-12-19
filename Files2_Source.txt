@@ -1,0 +1,183 @@
+rbsywt: lodd 4093		; receiver address
+        subd mask:
+        jneg rbsywt:
+        retn
+xbsywt:     lodd 4095
+	    subd mask:
+	    jneg xbsywt:
+	    retn
+readint:
+	lodd on:                ; mic1 program to print string
+        stod 4093               ; and scan in a 1-5 digit number
+bgndig: call rbsywt:            ; using CSR memory locations
+        lodd 4092
+        subd numoff:
+        push
+nxtdig: call rbsywt:
+        lodd 4092
+        stod nxtchr:
+        subd nl:
+        jzer endnum:
+        mult 10
+        lodd nxtchr:
+        subd numoff:
+        addl 0
+        stol 0
+        jump nxtdig:
+endnum: 
+	pop
+        retn
+writeint:
+	lodd on:
+	stod 4095
+	lodd neg1:		; -1 will mark end of result when printing
+	push
+	lodd mask:
+	push
+encode: lodd sum:
+	jzer print:		; when quotient is zero, we can print
+	lodd mask:		; load 10 and push on stack
+	push
+	lodd sum:		; load sum and push on stack
+	push
+	div			; divide sum by 10
+	pop			; pop quotient into ac
+	stod sum:		; store quotient in sum
+	pop			; pop remainder(R) into ac
+	insp 2			
+	addd numoff:		; add 48 to R to convert to ascii
+	push			; push it onto stack
+	jump encode:		; loop back for rest of number
+print:  pop			; pop first ascii char into ac
+	jneg done:		; when we reach the -1 in stack, thats the end	
+	stod 4094
+	call xbsywt:
+	jump print:
+done:
+	loco 0
+        retn
+writestr:
+        pshi			; gets first 2 chars on stack
+        addd c1:		; add 1 to ptr to get next 2 chars on next pass
+        stod pstr1:		; save the new ptr
+        pop			; pop the value off stack (first 2 chars)
+        jzer crnl:		; check for zero (end of string + even # of chars)
+        stod 4094		; take ac value(2 ascii codes) and send to transmitter
+        push			; put it on stack
+        subd c255:		; subtract all 1s 
+        jneg crnl:		; check if negative (if upper byte is all zeros)
+        call sb:		; if upper byte has meaning full ascii code, swap bytes
+        insp 1			; get arg off stack
+        push			; push reversed chars on stack
+        call xbsywt:		; returns when transmit is ready 
+        pop			
+        stod 4094		; send 16 bit val(high byte in low byte pos)to transmitter
+        call xbsywt:		; prepare to transmit next set
+        lodd pstr1:		; load ac with ptr
+        jump writestr:		; next loop
+crnl:   lodd cr:		; load ac with ascii for carriage return
+        stod 4094		; store ito on transmitter
+        call xbsywt:		
+        lodd nl:		; load ac with newline ascii char
+        stod 4094		; store to transmitter
+        call xbsywt:
+        retn
+
+sb:     loco 8
+loop1:  jzer finish:
+        subd c1:
+        stod lpcnt:
+        lodl 1
+        jneg add1:
+        addl 1
+        stol 1
+        lodd lpcnt:
+        jump loop1:
+add1:   addl 1
+        addd c1:
+        stol 1
+        lodd lpcnt:
+        jump loop1:
+finish: lodl 1
+        retn
+addints: 
+	lodd binum1:		; load first num in ac	
+	stod sum:		; store it in sum
+	lodd binum2:		; load second num in ac
+	addd sum:		; add it with other num
+	stod sum:		; store into sum
+	jneg ovrflow:		; negative result from addition = overflow
+	retn
+ovrflow:
+        lodd neg1:              ; keep the return code as -1 in ac
+	retn
+numoff: 48
+temp:   0
+nxtchr: 0
+numptr: binum1:
+binum1: 0
+binum2: 0
+lpcnt:  0
+mask:   10
+on:     8
+nl:     10
+cr:     13
+c1:     1
+c10:    10
+c255:   255
+sum:    0
+pstr1:  0
+neg1:	-1
+ansout: -1
+        0
+        0
+        0
+        0
+        0
+        0
+ansptr: 0
+quotnt: 0
+numcnt: 1
+str1:   "Please enter a 1-5 digit number followed by enter"
+str2:   "The result is"
+str3:   "ERROR - OVERFLOW"
+main:   lodd on:
+        stod 4095
+        call xbsywt:
+        loco str1:
+        push
+        call writestr:
+	insp 1
+        call readint:
+        stod binum1:
+        call xbsywt:
+        loco str1:
+        push
+        call writestr:
+        insp 1
+        call readint:
+        stod binum2:
+        lodd binum1:
+        push
+        lodd binum2:
+        push
+        call addints:
+        insp 2
+        stod sum:
+        jpos prtsum:
+        call xbsywt:
+        loco str3:
+        push
+        call writestr:
+        insp 1
+        halt
+prtsum: 
+        call xbsywt:
+        loco str2:
+        push
+        call writestr:
+        insp 1
+        call xbsywt:
+        lodd sum:
+        call writeint:
+        halt
